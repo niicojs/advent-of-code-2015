@@ -11,7 +11,6 @@ import {
   nums,
   timer,
 } from '../utils.js';
-import { submit } from '../aoc.js';
 
 consola.wrapAll();
 
@@ -63,7 +62,4 @@ let answer = 0;
 
 consola.success('result', answer);
 consola.success('Done in', t.format());
-if (process.argv[2] === 'real') {
-  // await submit({ day, level: 1, answer: answer });
-}
 clipboard.writeSync(answer?.toString());
