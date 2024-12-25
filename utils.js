@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { type } from 'node:os';
+import { hrtime } from 'node:process';
 import path from 'node:path';
+import { colors } from 'consola/utils';
 
 /**
  *
@@ -11,15 +12,14 @@ export function getCurrentDay() {
   if (!file.match(/^(\d+)/)) {
     file = path.parse(process.argv[1]).name;
   }
-  return file.match(/^(\d+)/)[0];
+  return file.match(/^(\d+)/)?.[0];
 }
 
 /**
  *
- * @param {string} day
  * @returns string
  */
-export function getRawData(day) {
+export function getRawData() {
   let filename = './input.txt';
   if (process.argv.length > 2) {
     if (
@@ -36,11 +36,11 @@ export function getRawData(day) {
 
 /**
  *
- * @param {string} day
+ * @param {boolean?} removeBlank
  * @returns string[]
  */
-export function getDataLines(day, removeBlank = true) {
-  const raw = getRawData(day);
+export function getDataLines(removeBlank = true) {
+  const raw = getRawData();
   let lines = raw.split(/\r?\n/);
   if (removeBlank) {
     lines = lines.filter(Boolean);
@@ -58,6 +58,16 @@ export function getGrid(lines) {
 }
 
 /**
+ * Extracts all integer numbers from a given string and returns them as an array of numbers.
+ *
+ * @param {string} str - The input string containing numbers.
+ * @returns {number[]} - An array of numbers extracted from the string.
+ */
+export function nums(str) {
+  return str.match(/-?\d+/g).map(Number);
+}
+
+/**
  *
  * @param {any[][]} grid
  * @param {number} x
@@ -71,13 +81,14 @@ export function inGridRange(grid, x, y) {
 /**
  * @param {any[][]} grid
  */
-export const printGrid = (grid) => {
+export const printGrid = (grid, path = null) => {
   const pad = (grid.length - 1).toString().length;
   console.log(''.padStart(pad, ' ') + ' ┌' + '─'.repeat(grid[0].length) + '┐');
   for (let y = 0; y < grid.length; y++) {
     let line = y.toString().padStart(pad, ' ') + ' │';
     for (let x = 0; x < grid[y].length; x++) {
-      line += grid[y][x];
+      if (path && inPath(path, [x, y])) line += colors.yellow(grid[y][x]);
+      else line += grid[y][x];
     }
     line += '│';
     console.log(line);
@@ -204,6 +215,22 @@ export function manhattan([x1, y1], [x2, y2]) {
 export const inPath = (path, [x, y]) =>
   path.some(([i, j]) => i === x && j === y);
 
+export function timer() {
+  let begin = 0n;
+  const start = () => {
+    begin = hrtime.bigint();
+  };
+  const elapsed = () => {
+    return hrtime.bigint() - begin;
+  };
+  const format = () => {
+    const nano = elapsed();
+    return formatElapsedTime(Number(nano / 1_000_000n));
+  };
+  start();
+  return { start, elapsed, format };
+}
+
 export const formatElapsedTime = (elapsed) => {
   const diff = Math.abs(elapsed);
 
@@ -219,7 +246,7 @@ export const formatElapsedTime = (elapsed) => {
     result += `${seconds.toString().padStart(2, 0)}s `;
   }
 
-  return result + `${milliseconds.toString().padEnd(3, 0)}ms`;
+  return result + `${milliseconds.toString()}ms`;
 };
 
 export const lacet = (path) => {
@@ -261,7 +288,41 @@ export function zip(...arr) {
     : [];
 }
 
-export const mod = (x, n) => ((x % n) + n) % n;
+/**
+ * positive remainder
+ * @param {number} a first operand
+ * @param {number} b operand to divide by
+ * @returns {number} positive remainder
+ */
+export function mod(x, n) {
+  return ((x % n) + n) % n;
+}
+
+/**
+ * Solve two equations with two incognites.
+ *  a1 * x + b1 * y = c1
+ *  a2 * x + b2 * y = c2
+ * @param {number[]} a first equation [a1, b1, c1]
+ * @param {number[]} b second equation [a2, b2, c2]
+ * @returns {number[]} [x, y]
+ */
+export function solve2eq2inc([a1, b1, c1], [a2, b2, c2]) {
+  const x = (b2 * c1 - b1 * c2) / (b2 * a1 - b1 * a2);
+  const y = (c1 - a1 * x) / b1;
+  return [x, y];
+}
+
+export function isPrime(n) {
+  if (isNaN(n) || !isFinite(n) || n % 1 || n < 2) return false;
+  if (n % 2 == 0) return n == 2;
+  if (n % 3 == 0) return n == 3;
+  var m = Math.sqrt(n);
+  for (var i = 5; i <= m; i += 6) {
+    if (n % i == 0) return false;
+    if (n % (i + 2) == 0) return false;
+  }
+  return true;
+}
 
 export const count = (arr, value) => {
   if (typeof arr === 'string') arr = arr.split('');

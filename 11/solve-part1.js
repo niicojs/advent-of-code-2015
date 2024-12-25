@@ -3,7 +3,6 @@ import clipboard from 'clipboardy';
 import {
   formatElapsedTime,
   getCurrentDay,
-  getDataLines,
   getRawData,
 } from '../utils.js';
 
